@@ -269,17 +269,29 @@ collect_all_records() {
 render_timeline() {
     local rec
     local ct repo hash an ae aI cI subject body repo_name
+    local oneline=false
+    if [[ ${#git_args[@]} -gt 0 ]]; then
+        for item in "${git_args[@]}"; do
+           if [[ "$item" == "--oneline" ]]; then
+               oneline=true
+           fi
+        done
+    fi
     while IFS= read -r -d '' rec || [[ -n "$rec" ]]; do
         [[ -z "$rec" ]] && continue
         # shellcheck disable=SC2034  # ct/aI are parsed for position but not shown in text view
         IFS="$US" read -r ct repo hash an ae aI cI subject body <<< "$rec"
-        repo_name=$(basename "$repo" | tr '[:lower:]' '[:upper:]')
-        printf 'commit %s  [%s]\n' "$hash" "$repo_name"
-        printf 'Author: %s <%s>\n' "$an" "$ae"
-        printf 'Date:   %s\n\n' "$cI"
-        printf '    %s\n' "$subject"
-        [[ -n "$body" ]] && printf '%s\n' "$body" | sed 's/^/    /'
-        printf '\n'
+        if [[ "$oneline" == true ]]; then
+            printf '%s %s %s\n' "$hash" "$repo" "$subject"
+        else
+            repo_name=$(basename "$repo" | tr '[:lower:]' '[:upper:]')
+            printf 'commit %s  [%s]\n' "$hash" "$repo_name"
+            printf 'Author: %s <%s>\n' "$an" "$ae"
+            printf 'Date:   %s\n\n' "$cI"
+            printf '    %s\n' "$subject"
+            [[ -n "$body" ]] && printf '%s\n' "$body" | sed 's/^/    /'
+            printf '\n'
+        fi
     done
 }
 
